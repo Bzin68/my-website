@@ -200,7 +200,6 @@
 </head>
 <body>
     <div class="welcome-message">
-        <h1>Welcome to BBE and CMT's lovely home</h1>
         <h1>欢迎来到我们的小家</h1>
     </div>
     
@@ -253,7 +252,7 @@
                 // Extract username from email (e.g., john.doe from john.doe@example.com)
                 const username = user.email.split('@')[0];
                 headers.forEach(header => {
-                    header.textContent = `Welcome to Your Dashboard, ${username}!`;
+                    header.textContent = `欢迎回家, ${username}!`;
                 });
             } else {
                 // User is not logged in
