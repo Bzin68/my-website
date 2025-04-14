@@ -35,7 +35,7 @@
     <script>
         const user = JSON.parse(localStorage.getItem('user'));
         if (user) {
-            document.getElementById('user-email').textContent = user.email.split('@')[0]; // Display username
+            document.getElementById('user-email').textContent = user.email; // Display full email
         } else {
             window.location.href = 'index.html';
         }

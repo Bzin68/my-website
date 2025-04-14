@@ -186,8 +186,8 @@
         <div class="login-section">
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
@@ -205,7 +205,7 @@
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
         
-                const username = document.getElementById('username').value;
+                const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
         
                 try {
@@ -214,7 +214,7 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ username, password }),
+                        body: JSON.stringify({ email, password }),
                     });
         
                     const result = await response.json();

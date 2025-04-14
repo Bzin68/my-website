@@ -1,12 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
-    const { username, password } = JSON.parse(event.body);
+    const { email, password } = JSON.parse(event.body);
 
-    if (!username || !password) {
+    if (!email || !password) {
         return {
             statusCode: 400,
-            body: JSON.stringify({ error: 'Username and password are required' }),
+            body: JSON.stringify({ error: 'Email and password are required' }),
         };
     }
 
@@ -16,21 +16,6 @@ exports.handler = async (event) => {
     );
 
     try {
-        const { data: userData, error: fetchError } = await supabase
-            .from('users')
-            .select('email')
-            .eq('username', username)
-            .single();
-
-        if (fetchError || !userData) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Invalid username' }),
-            };
-        }
-
-        const email = userData.email;
-
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
