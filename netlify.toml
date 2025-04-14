@@ -1,6 +1,11 @@
 [build]
-  command = "npm install"
-  publish = "public"  # Your frontend files directory
+  command = "" # No build step needed; HTML files are ready to serve
+  publish = "src" # Serve files directly from src
 
 [functions]
-  directory = "netlify/functions"
+  directory = "netlify/functions" # Deploy Netlify Functions for Supabase
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
