@@ -43,6 +43,15 @@
 
         .rooms-list {
             width: 100%;
+            display: none; /* Initially hidden */
+        }
+
+        .rooms-placeholder {
+            width: 100%;
+            height: 200px; /* Adjust height as needed */
+            background-color: #ccc; /* Solid rectangle color */
+            border-radius: 8px;
+            display: block; /* Initially visible */
         }
 
         .rooms-list ul {
@@ -128,6 +137,23 @@
             font-size: 14px;
         }
 
+        .logout-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-button:hover {
+            background-color: #c9302c;
+        }
+
         @media only screen and (max-width: 667px) {
             body {
                 padding: 15px;
@@ -174,7 +200,8 @@
     </div>
     
     <div class="content-section">
-        <div class="rooms-list">
+        <div class="rooms-placeholder" id="roomsPlaceholder"></div>
+        <div class="rooms-list" id="roomsList">
             <ul>
                 <li><a href="bedroom.html" class="room-button">Bedroom</a></li>
                 <li><a href="closets.html" class="room-button">Closets</a></li>
@@ -183,7 +210,7 @@
             </ul>
         </div>
         
-        <div class="login-section">
+        <div class="login-section" id="loginSection">
             <form class="login-form" id="loginForm">
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -197,38 +224,95 @@
                 <div id="error-message" class="error-message"></div>
             </form>
         </div>
-        
-        <script>
-            const loginForm = document.getElementById('loginForm');
-            const errorMessage = document.getElementById('error-message');
-        
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-        
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-        
-                try {
-                    const response = await fetch('/.netlify/functions/login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ email, password }),
-                    });
-        
-                    const result = await response.json();
-        
-                    if (!response.ok) {
-                        throw new Error(result.error || 'Login failed');
-                    }
-        
-                    localStorage.setItem('user', JSON.stringify(result.user));
-                    window.location.href = 'dashboard.html';
-                } catch (error) {
-                    errorMessage.textContent = error.message;
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginSection = document.getElementById('loginSection');
+        const errorMessage = document.getElementById('error-message');
+        const roomsList = document.getElementById('roomsList');
+        const roomsPlaceholder = document.getElementById('roomsPlaceholder');
+        const headers = document.querySelectorAll('h1');
+
+        // Function to update UI based on login state
+        function updateUI() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                // User is logged in
+                roomsList.style.display = 'block';
+                roomsPlaceholder.style.display = 'none';
+                loginSection.innerHTML = '<button class="logout-button" onclick="logout()">Logout</button>';
+
+                // Extract username from email (e.g., john.doe from john.doe@example.com)
+                const username = user.email.split('@')[0];
+                headers.forEach(header => {
+                    header.textContent = `Welcome to Your Dashboard, ${username}!`;
+                });
+            } else {
+                // User is not logged in
+                roomsList.style.display = 'none';
+                roomsPlaceholder.style.display = 'block';
+                loginSection.innerHTML = `
+                    <form class="login-form" id="loginForm">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="login-button">Login</button>
+                        <div id="error-message" class="error-message"></div>
+                    </form>
+                `;
+
+                // Reattach event listener to the new form
+                const newLoginForm = document.getElementById('loginForm');
+                newLoginForm.addEventListener('submit', handleLogin);
+            }
+        }
+
+        // Handle login form submission
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Login failed');
                 }
-            });
-        </script>
+
+                localStorage.setItem('user', JSON.stringify(result.user));
+                updateUI(); // Update UI after login
+            } catch (error) {
+                errorMessage.textContent = error.message;
+            }
+        }
+
+        // Handle logout
+        function logout() {
+            localStorage.removeItem('user');
+            updateUI(); // Update UI after logout
+        }
+
+        // Attach event listener to the initial form
+        loginForm.addEventListener('submit', handleLogin);
+
+        // Update UI on page load
+        updateUI();
+    </script>
 </body>
 </html>
