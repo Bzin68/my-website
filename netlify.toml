@@ -1,0 +1,6 @@
+[build]
+  command = "npm install"
+  publish = "public"  # Your frontend files directory
+
+[functions]
+  directory = "netlify/functions"

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Enhanced viewport tag for better mobile handling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>OurHome</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="welcome-message">
+        <h1>Welcome to BBE and CMT's lovely home</h1>
+        <h1>欢迎来到我们的小家</h1>
+    </div>
+    
+    <div class="content-section">
+        <div class="rooms-list">
+            <ul>
+                <li><a href="living-room.html" class="room-button">Living Room</a></li>
+                <li><a href="bedroom.html" class="room-button">Bedroom</a></li>
+                <li><a href="closets.html" class="room-button">Closets</a></li>
+                <li><a href="washroom.html" class="room-button">WashRoom</a></li>
+                <li><a href="kitchen.html" class="room-button">Kitchen</a></li>
+            </ul>
+        </div>
+        
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" placeholder="Enter your username" required>
+          </div>
+          <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="login-button">Login</button>
+          <div id="error-message" class="error-message"></div>
+        </form>
+    </div>
+</body>
+</html>
