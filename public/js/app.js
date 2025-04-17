@@ -12,6 +12,7 @@ document.getElementById('upload-button').onclick = async () => {
 
         if (error) {
             console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
             return;
         }
 
@@ -22,9 +23,15 @@ document.getElementById('upload-button').onclick = async () => {
 
         if (insertError) {
             console.error('Error inserting image:', insertError);
+            alert('Error saving image data. Please try again.');
         } else {
+            alert('Image uploaded successfully!');
             loadImages(); // Reload images after upload
+            fileInput.value = ''; // Clear file input
+            document.getElementById('description').value = ''; // Clear description
         }
+    } else {
+        alert('Please select an image to upload.');
     }
 };
 
