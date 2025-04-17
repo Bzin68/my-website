@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户信息中心</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    /* 全局样式 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 容器样式 */
+    .profile-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    /* 头部样式 */
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .back-button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #3b82f6;
+    }
+
+    /* 头像区域 */
+    .avatar-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .avatar-preview {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 3px solid white;
+    }
+
+    #current-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-upload-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .avatar-upload-label:hover {
+      background: rgba(0,0,0,0.8);
+    }
+
+    #avatar-upload {
+      display: none;
+    }
+
+    /* 用户信息卡片 */
+    .profile-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+
+    .profile-info {
+      margin-top: 2rem;
+    }
+
+    /* 信息项样式 */
+    .info-item {
+      margin-bottom: 1.5rem;
+    }
+
+    .info-item label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    /* 用户名控制 */
+    .username-control {
+      display: flex;
+      gap: 1rem;
+    }
+
+    #username-input {
+      flex: 1;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    /* 按钮样式 */
+    button {
+      padding: 0.8rem 1.5rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    /* 积分显示 */
+    .score-display {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      padding: 1rem;
+      background: #f0f6ff;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* 加载状态 */
+    .loading-spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 600px) {
+      .profile-container {
+        padding: 0.5rem;
+      }
+      
+      .profile-card {
+        padding: 1rem;
+      }
+      
+      .username-control {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <div class="profile-header">
+      <h1>用户信息中心</h1>
+      <button class="back-button" onclick="window.history.back()">← 返回</button>
+    </div>
+
+    <div class="profile-card">
+      <!-- 头像区域 -->
+      <div class="avatar-section">
+        <div class="avatar-preview">
+          <img id="current-avatar" src="default-avatar.jpg" alt="用户头像">
+          <label class="avatar-upload-label">
+            <input type="file" id="avatar-upload" accept="image/*">
+            <span class="upload-hint">更换头像</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 用户信息 -->
+      <div class="profile-info">
+        <div class="info-item">
+          <label>用户名</label>
+          <div class="username-control">
+            <input type="text" id="username-input" maxlength="20" placeholder="输入新用户名">
+            <button id="update-username-btn">更新</button>
+          </div>
+          <p id="username-error" style="color: red; margin-top: 0.5rem; display: none;"></p>
+        </div>
+
+        <div class="info-item">
+          <label>用户积分</label>
+          <div class="score-display" id="user-score">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 配置信息
+    const SUPABASE_CONFIG = {
+      URL: 'https://wyquovvgkyccfywxdden.supabase.co',
+      KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5cXVvdnZna3ljY2Z5d3hkZGVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MDcwMjIsImV4cCI6MjA2MDE4MzAyMn0.ldBWtZmsuo4uaNF01y6MUbUefOKtgUAmqBj-xTRimkc'
+    };
+
+    // 初始化Supabase客户端
+    const supabase = supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+    let currentUser = null;
+
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // 获取当前用户
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (!user || error) throw new Error('用户未登录');
+        
+        currentUser = user;
+        console.log('当前用户ID:', currentUser.id);
+
+        // 加载用户资料
+        await loadUserProfile();
+        
+        // 设置头像上传和用户名更新事件
+        setupEventListeners();
+      } catch (error) {
+        console.error('初始化失败:', error);
+        alert('请先登录系统');
+        window.location.href = '/login';
+      }
+    });
+
+    // 加载用户资料
+    async function loadUserProfile() {
+      try {
+        // 查询用户资料
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username, avatar_url, score')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (error) throw error;
+        if (!profile) throw new Error('用户资料不存在');
+
+        // 更新界面显示
+        updateProfileUI(profile);
+      } catch (error) {
+        console.error('加载资料失败:', error);
+        document.getElementById('user-score').innerHTML = 
+          `<span style="color:red">加载失败: ${error.message}</span>`;
+      }
+    }
+
+    // 更新界面显示
+    function updateProfileUI(profile) {
+      // 更新用户名
+      document.getElementById('username-input').value = profile.username || '';
+      
+      // 更新积分
+      document.getElementById('user-score').textContent = profile.score || 0;
+      
+      // 更新头像
+      updateAvatarDisplay(profile.avatar_url);
+    }
+
+    // 更新头像显示
+    function updateAvatarDisplay(avatarPath) {
+      const avatar = document.getElementById('current-avatar');
+      if (avatarPath) {
+        // 添加时间戳防止缓存
+        const timestamp = new Date().getTime();
+        avatar.src = `${supabase.storage.from('avatars').getPublicUrl(avatarPath).data.publicUrl}?t=${timestamp}`;
+      } else {
+        avatar.src = 'default-avatar.jpg';
+      }
+      
+      // 头像加载失败时使用默认头像
+      avatar.onerror = () => {
+        avatar.src = 'default-avatar.jpg';
+      };
+    }
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 头像上传
+      document.getElementById('avatar-upload').addEventListener('change', handleAvatarUpload);
+      
+      // 用户名更新
+      document.getElementById('update-username-btn').addEventListener('click', updateUsername);
+    }
+
+    // 处理头像上传
+    async function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB限制
+      const updateBtn = document.getElementById('update-username-btn');
+      
+      try {
+        // 验证文件
+        if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
+        if (file.size > MAX_FILE_SIZE) throw new Error('文件大小不能超过5MB');
+
+        // 更新按钮状态
+        toggleButtonState(updateBtn, true, '上传中...');
+
+        // 压缩图片
+        const compressedFile = await compressImage(file);
+        
+        // 上传到Supabase存储
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}/avatar.${fileExt}`;
+        
+        // 上传文件
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, compressedFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+
+        // 更新数据库记录
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: fileName })
+          .eq('id', currentUser.id);
+
+        if (dbError) throw dbError;
+
+        // 刷新显示
+        await loadUserProfile();
+        alert('头像更新成功！');
+      } catch (error) {
+        console.error('头像上传失败:', error);
+        alert(`头像上传失败: ${error.message}`);
+      } finally {
+        // 重置状态
+        toggleButtonState(updateBtn, false);
+        event.target.value = '';
+      }
+    }
+
+    // 图片压缩函数
+    async function compressImage(file, maxSize = 800, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // 计算缩放比例
+          if (width > height) {
+            if (width > maxSize) {
+              height *= maxSize / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width *= maxSize / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          
+          // 绘制压缩后的图片
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // 转换为Blob
+          canvas.toBlob(blob => {
+            if (!blob) return reject(new Error('图片压缩失败'));
+            
+            resolve(new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            }));
+            
+            // 释放内存
+            URL.revokeObjectURL(img.src);
+          }, 'image/jpeg', quality);
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(img.src);
+          reject(new Error('图片加载失败'));
+        };
+      });
+    }
+
+    // 更新用户名
+    async function updateUsername() {
+      const input = document.getElementById('username-input');
+      const errorDisplay = document.getElementById('username-error');
+      const updateBtn = document.getElementById('update-username-btn');
+      
+      try {
+        const newUsername = input.value.trim();
+        
+        // 验证用户名
+        errorDisplay.style.display = 'none';
+        if (!/^[\w\u4e00-\u9fa5]{2,20}$/.test(newUsername)) {
+          throw new Error('用户名需为2-20位（字母、数字、中文或下划线）');
+        }
+
+        // 更新按钮状态
+        toggleButtonState(updateBtn, true, '更新中...');
+
+        // 检查用户名是否已存在
+        const { count, error: checkError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact' })
+          .eq('username', newUsername)
+          .neq('id', currentUser.id);
+
+        if (checkError) throw checkError;
+        if (count > 0) throw new Error('用户名已被使用');
+
+        // 执行更新
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ username: newUsername })
+          .eq('id', currentUser.id);
+
+        if (updateError) throw updateError;
+        
+        // 更新成功
+        alert('用户名更新成功！');
+      } catch (error) {
+        console.error('用户名更新失败:', error);
+        errorDisplay.textContent = error.message;
+        errorDisplay.style.display = 'block';
+      } finally {
+        toggleButtonState(updateBtn, false);
+      }
+    }
+
+    // 切换按钮状态
+    function toggleButtonState(button, isLoading, text = '更新') {
+      button.disabled = isLoading;
+      button.innerHTML = isLoading ? `<div class="loading-spinner"></div>` : text;
+    }
+  </script>
+</body>
+</html>
