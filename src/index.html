@@ -50,10 +50,8 @@
 
         .rooms-placeholder {
             width: 100%;
-            height: 200px;
-            background-color: #ccc;
-            border-radius: 8px;
             display: block; /* Initially visible */
+            text-align: center; /* Center the image */
         }
 
         .rooms-list ul {
@@ -211,13 +209,16 @@
     </div>
     
     <div class="content-section">
-        <div class="rooms-placeholder" id="roomsPlaceholder"></div>
+        <div class="rooms-placeholder" id="roomsPlaceholder">
+            <img src="IMG_3776.JPG" alt="Welcome Image" style="width: 100%; height: auto; border-radius: 8px;">
+        </div>
         <div class="rooms-list" id="roomsList">
             <ul>
                 <li><a href="bedroom.html" class="room-button">Bedroom</a></li>
                 <li><a href="closets.html" class="room-button">Closets</a></li>
                 <li><a href="washroom.html" class="room-button">WashRoom</a></li>
                 <li><a href="kitchen.html" class="room-button">Kitchen</a></li>
+                <li><a href="mailbox.html" class="room-button">Mailbox</a></li>
                 <li><button class="logout-button" id="logoutButton" style="display: none;">Logout</button></li>
             </ul>
         </div>

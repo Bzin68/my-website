@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mailbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+        }
+        .message-box {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Mailbox</h1>
+    <div id="mailContent">Loading...</div>
+
+    <script>
+        async function loadMailContent() {
+            try {
+                const response = await fetch('mail.txt'); // Path to your text file
+                if (!response.ok) {
+                    throw new Error('Failed to load the file');
+                }
+                const text = await response.text();
+                const lines = text.split('\n'); // Split text into lines
+                const mailContentDiv = document.getElementById('mailContent');
+                mailContentDiv.innerHTML = ''; // Clear loading message
+
+                lines.forEach(line => {
+                    const messageBox = document.createElement('div');
+                    messageBox.className = 'message-box';
+                    messageBox.textContent = line;
+                    mailContentDiv.appendChild(messageBox); // Append each line as a box
+                });
+            } catch (error) {
+                document.getElementById('mailContent').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Load the mail content on page load
+        loadMailContent();
+    </script>
+</body>
+</html>

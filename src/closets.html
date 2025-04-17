@@ -5,8 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>cmt & bbe 的衣柜</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
     /* 将样式移到头部避免FOUC */
+    .upload-section {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+
+    .upload-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    #image {
+      display: none;
+    }
+
+    .upload-label {
+      background: #3b82f6;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-label:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    #description {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+
+    #description:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* 移除元数据展示 */
+    .image-info small {
+      display: none;
+    }
+
     #gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -57,9 +113,18 @@
 
   <div class="container">    
     <div class="upload-section">
-      <input type="file" id="image" accept="image/*" />
-      <input type="text" id="description" placeholder="添加图片描述..." />
-      <button id="upload-button">上传图片</button>
+      <div class="upload-controls">
+        <input type="file" id="image" accept="image/*">
+        <label for="image" class="upload-label">
+          <i class="fas fa-cloud-upload-alt"></i>
+          选择图片
+        </label>
+        <input type="text" id="description" placeholder="添加描述...">
+        <button id="upload-button" class="upload-label">
+          <i class="fas fa-paper-plane"></i>
+          立即上传
+        </button>
+      </div>
     </div>
     
     <h2>衬衫 & 裙子</h2>
@@ -178,20 +243,16 @@ async function loadImages() {
       if (error) throw error;
 
       gallery.innerHTML = data.length ? data.map(image => `
-          <div class="image-card">
-              <img src="${image.url}" 
-                  alt="${image.description}"
-                  loading="lazy"
-                  onerror="this.src='//placehold.co/600x400?text=图片加载失败'">
-              <div class="image-info">
-                  <p>${image.description}</p>
-                  <small>
-                      ${new Date(image.metadata.uploaded_at).toLocaleDateString()} • 
-                      ${(image.metadata.size/1024/1024).toFixed(1)}MB
-                  </small>
-              </div>
-          </div>
-      `).join('') : '<p class="empty">还没有照片，上传第一张吧</p>';
+        <div class="image-card">
+            <img src="${image.url}" 
+                alt="${image.description}"
+                loading="lazy"
+                onerror="this.src='//placehold.co/600x400?text=图片加载失败'">
+            <div class="image-info">
+                <p>${image.description}</p>
+            </div>
+        </div>
+    `).join('') : '<p class="empty">还没有照片，上传第一张吧</p>';
 
   } catch (error) {
       console.error('[错误] 加载失败:', error);
