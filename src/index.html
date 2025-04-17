@@ -62,7 +62,7 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 12px; /* Uniform gap between all buttons */
         }
 
         .room-button {
@@ -143,13 +143,13 @@
         .logout-button {
             display: inline-block;
             width: 100%;
-            padding: 14px 20px; /* Same padding as room-button */
+            padding: 14px 20px;
             background-color: var(--logout-color);
             color: white;
             border: none;
             border-radius: 8px;
             text-align: center;
-            font-size: 16px; /* Same font-size as room-button */
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -218,8 +218,8 @@
                 <li><a href="closets.html" class="room-button">Closets</a></li>
                 <li><a href="washroom.html" class="room-button">WashRoom</a></li>
                 <li><a href="kitchen.html" class="room-button">Kitchen</a></li>
+                <li><button class="logout-button" id="logoutButton" style="display: none;">Logout</button></li>
             </ul>
-            <button class="logout-button" id="logoutButton" style="display: none;">Logout</button>
         </div>
         
         <div class="login-section" id="loginSection">
@@ -255,19 +255,29 @@
                 roomsList.style.display = 'block';
                 roomsPlaceholder.style.display = 'none';
                 loginSection.style.display = 'none';
-                logoutButton.style.display = 'block'; // Show logout button
+                logoutButton.style.display = 'block';
 
-                // Extract username from email (e.g., john.doe from john.doe@example.com)
+                // Extract username from email
                 const username = user.email.split('@')[0];
                 headers.forEach(header => {
                     header.textContent = `欢迎回家, ${username}!`;
                 });
             } else {
-                // User is not logged in
+                // User is not logged in - reset to initial state
                 roomsList.style.display = 'none';
                 roomsPlaceholder.style.display = 'block';
                 loginSection.style.display = 'block';
-                logoutButton.style.display = 'none'; // Hide logout button
+                logoutButton.style.display = 'none';
+                
+                // Clear form fields
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                errorMessage.textContent = '';
+                
+                // Reset welcome message
+                headers.forEach(header => {
+                    header.textContent = '欢迎来到我们的小家';
+                });
             }
         }
 
