@@ -1,20 +1,163 @@
+<!-- 修改后的HTML部分 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Upload</title>
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        .upload-section {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .image-card {
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .progress-bar {
+            height: 5px;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload Image</h1>
-    <input type="file" id="image" />
-    <input type="text" id="description" placeholder="Description" />
-    <button id="upload-button">Upload</button>
+    <div class="upload-section">
+        <h1>Upload Image</h1>
+        <input type="file" id="image" accept="image/*" />
+        <input type="text" id="description" placeholder="Image description" />
+        <button id="upload-button">Upload</button>
+        <div class="progress-bar"></div>
+        <div id="error-message" style="color: red; margin-top: 10px;"></div>
+    </div>
 
-    <h2>Images</h2>
+    <h2>Image Gallery</h2>
     <div id="gallery"></div>
 
-    <script src="public/js/app.js"></script>
+    <script>
+        // 初始化Supabase客户端
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_KEY = 'your-anon-key';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // DOM元素
+        const uploadButton = document.getElementById('upload-button');
+        const progressBar = document.querySelector('.progress-bar');
+        const errorMessage = document.getElementById('error-message');
+
+        // 上传处理函数
+        const handleUpload = async () => {
+            try {
+                const fileInput = document.getElementById('image');
+                const description = document.getElementById('description').value.trim();
+                
+                // 验证输入
+                if (!fileInput.files[0]) {
+                    throw new Error('请选择要上传的图片');
+                }
+                if (!description) {
+                    throw new Error('请填写图片描述');
+                }
+
+                const file = fileInput.files[0];
+                
+                // 显示上传进度
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress = Math.min(progress + 10, 90);
+                    progressBar.style.width = `${progress}%`;
+                }, 500);
+
+                // 上传到存储桶
+                const { data: storageData, error: storageError } = await supabase.storage
+                    .from('images')
+                    .upload(`public/${Date.now()}_${file.name}`, file, {
+                        cacheControl: '3600',
+                        upsert: false,
+                    });
+
+                clearInterval(progressInterval);
+                
+                if (storageError) {
+                    throw new Error(`存储上传失败: ${storageError.message}`);
+                }
+
+                // 获取公开URL
+                const { data: urlData } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(storageData.path);
+
+                // 保存到数据库
+                const { error: dbError } = await supabase
+                    .from('images')
+                    .insert([{
+                        url: urlData.publicUrl,
+                        description,
+                        metadata: {
+                            size: file.size,
+                            type: file.type,
+                            uploaded_at: new Date().toISOString()
+                        }
+                    }]);
+
+                if (dbError) {
+                    throw new Error(`数据库保存失败: ${dbError.message}`);
+                }
+
+                // 更新UI
+                progressBar.style.width = '100%';
+                setTimeout(() => progressBar.style.width = '0%', 1000);
+                loadImages();
+                fileInput.value = '';
+                document.getElementById('description').value = '';
+                
+            } catch (error) {
+                console.error('上传错误:', error);
+                errorMessage.textContent = error.message;
+                progressBar.style.width = '0%';
+            }
+        };
+
+        // 图片加载函数
+        const loadImages = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('images')
+                    .select('*')
+                    .order('metadata->uploaded_at', { ascending: false });
+
+                if (error) throw error;
+
+                const gallery = document.getElementById('gallery');
+                gallery.innerHTML = data.map(image => `
+                    <div class="image-card">
+                        <img src="${image.url}" 
+                             alt="${image.description}" 
+                             style="width: 100%; height: 200px; object-fit: cover;">
+                        <p>${image.description}</p>
+                        <small>${new Date(image.metadata.uploaded_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载错误:', error);
+                errorMessage.textContent = error.message;
+            }
+        };
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', loadImages);
+        uploadButton.addEventListener('click', handleUpload);
+    </script>
 </body>
 </html>
