@@ -251,7 +251,7 @@
 
         // Function to update UI based on login state
         function updateUI() {
-            const user = JSON.parse(localStorage.getItem('user'));
+            const user = JSON.parse(sessionStorage.getItem('user'));
             if (user) {
                 // User is logged in
                 roomsList.style.display = 'block';
@@ -305,7 +305,8 @@
                     throw new Error(result.error || 'Login failed');
                 }
 
-                localStorage.setItem('user', JSON.stringify(result.user));
+                // Store user data in sessionStorage instead of localStorage
+                sessionStorage.setItem('user', JSON.stringify(result.user));
                 updateUI(); // Update UI after login
             } catch (error) {
                 errorMessage.textContent = error.message;
@@ -314,7 +315,7 @@
 
         // Handle logout
         function logout() {
-            localStorage.removeItem('user');
+            sessionStorage.removeItem('user');
             updateUI(); // Update UI after logout
         }
 
